@@ -1,9 +1,8 @@
 import tkinter as tk
 from tkinter import *
-from math import radians, cos, sin, sqrt, pi
+from math import sqrt, pi
 
 class Graphene:
-
     def __init__(self, origin=(100, 250), a_length= 50, length=6, width=6):
         self.origin = origin
         self.a_length = a_length

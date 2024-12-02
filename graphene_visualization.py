@@ -68,7 +68,7 @@ def main():
 
     # Create the main application window
     root = tk.Tk()
-    root.title("Dark Theme Tkinter GUI")
+    root.title("Graphene Strain GUI")
     root.geometry("800x600")
 
     set_dark_theme(root)
