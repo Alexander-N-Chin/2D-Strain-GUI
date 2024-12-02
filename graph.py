@@ -52,7 +52,3 @@ class RealTimeGraph:
         self.canvas.draw()
 
         self.master.after(100, self.update_plot)
-
-root = tk.Tk()
-app = RealTimeGraph(root)
-root.mainloop()
