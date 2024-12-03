@@ -1,8 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, ALL
 from graphene import Graphene
-from graph import RealTimeGraph
-import numpy as np
+from graph import graph3D, graph2D
 
 # Define the dark theme colors
 def set_dark_theme(root):
@@ -38,7 +37,7 @@ def redraw_canvas_recip(g: Graphene, canvas: tk.Canvas):
     g.draw_reciprocal_atoms(canvas)
 
 
-def update_canvas(g: Graphene, r1: RealTimeGraph, r2: RealTimeGraph, scale_dict: dict[str, tk.Scale], lattice_canvas, recip_canvas):
+def update_canvas(g: Graphene, r1: graph3D, r2: graph2D, scale_dict: dict[str, tk.Scale], lattice_canvas, recip_canvas):
     # Read the current values from the scales
     width = scale_dict["width"].get()
     length = scale_dict["length"].get()
@@ -46,10 +45,8 @@ def update_canvas(g: Graphene, r1: RealTimeGraph, r2: RealTimeGraph, scale_dict:
     # Update the Graphene object
     g.width = width
     g.length = length
-    r1.amplitude = width
-    r1.frequency = length
-    r2.amplitude = width
-    r2.frequency = length
+    # r1.b = width
+    # r2.b = width
     
     # Redraw the canvas
     redraw_canvas_lattice(g, lattice_canvas)
@@ -86,8 +83,8 @@ def main():
 
     # Create a list of labels and input sliders (Scale widgets)
     input_fields = [
-        ("width", 1, 20, 15),
-        ("length", 1, 20, 15)
+        ("width", 1, 10, 1),
+        ("length", 1, 10, 1)
     ]
 
     for label_text, min_val, max_val, default_val in input_fields:
@@ -103,31 +100,22 @@ def main():
     graph_frame = ttk.Frame(main_frame)
     graph_frame.pack(side="right", fill="both", expand=True)
 
-    # create sin graph
-    def sinwave(x:float, amp:float, freq:float):
-        y = amp * np.sin(x * freq) 
-        return y
-    r1 = RealTimeGraph(graph_frame, sinwave)
-
-    # create log graph
-    def logwave(x:float, amp:float, freq:float):
-        y = amp * np.log10(x * freq) 
-        return y
-    r2 = RealTimeGraph(graph_frame, logwave)
+    r2 = graph2D(graph_frame)
+    r1 = graph3D(graph_frame)
 
     # Create the brave lattice column for the canvas
     canvas_frame = ttk.Frame(main_frame, width=500)
     canvas_frame.pack(side="right", fill="both", expand=True)
 
     # Add a canvas to the right column
-    lattice_canvas = tk.Canvas(canvas_frame, background="#1e1e1e", width = 1000)
+    lattice_canvas = tk.Canvas(canvas_frame, background="#1e1e1e", width = 1500)
     lattice_canvas.bind("<MouseWheel>", lambda event: do_zoom(event, lattice_canvas)) # WINDOWS ONLY
     lattice_canvas.bind('<ButtonPress-1>', lambda event: lattice_canvas.scan_mark(event.x, event.y))
     lattice_canvas.bind("<B1-Motion>", lambda event: lattice_canvas.scan_dragto(event.x, event.y, gain=1))
     lattice_canvas.pack(fill="both", expand=True)
 
     # Add a canvas to the reciprocal column
-    recip_canvas = tk.Canvas(canvas_frame, background="#1e1e1e", width=1000)
+    recip_canvas = tk.Canvas(canvas_frame, background="#1e1e1e", width=1500)
     recip_canvas.bind("<MouseWheel>", lambda event: do_zoom(event, recip_canvas)) # WINDOWS ONLY
     recip_canvas.bind('<ButtonPress-1>', lambda event: recip_canvas.scan_mark(event.x, event.y))
     recip_canvas.bind("<B1-Motion>", lambda event: recip_canvas.scan_dragto(event.x, event.y, gain=1))
