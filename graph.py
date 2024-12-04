@@ -9,15 +9,22 @@ class graph3D:
 
         # Constants
         self.b = 1
-        self.a = 0.246  # nm, lattice constant
-        self.gamma = 2.7  # eV
+        self.beta = 3                                        # some number 2-3
+        self.a = 0.246                                          # nm, lattice constant
+        self.delta = [self.a/2 * np.array([np.sqrt(3), 1]),     # hopping integral to nearest neighbors
+                self.a/2 * np.array([-np.sqrt(3), 1]),          # hopping integral to nearest neighbors
+                self.a * np.array([0, -1])]                     # hopping integral to nearest neighbors
+        self.t_0 = 35                                            # assume for simplicity
+        self.gamma_s = 0
+        self.epsilon_a = 0
+        self.epsilon_z = 0
 
         # Tkinter frame for Matplotlib
         self.frame = Frame(master)
         self.frame.pack(fill="both", expand=True)
 
         # Matplotlib figure with transparent background
-        self.fig_3d = Figure(figsize=(4, 8), dpi=100, facecolor="#2e2e2e")
+        self.fig_3d = Figure(figsize=(6, 8), dpi=100, facecolor="#2e2e2e")
         self.ax_3d = self.fig_3d.add_subplot(111, projection='3d', facecolor="#2e2e2e")
 
         # Attach the canvas to Tkinter
@@ -46,19 +53,40 @@ class graph3D:
 
     def init_k_space(self):
         """Initialize the k-space grid and energy bands."""
-        kx_range = np.linspace(-2 * np.pi / self.a, 2 * np.pi / self.a, 300)
-        ky_range = np.linspace(-2 * np.pi / self.a, 2 * np.pi / self.a, 300)
+        kx_range = np.linspace(-15, 15, 500)
+        ky_range = np.linspace(-15, 15, 500)
         self.kx, self.ky = np.meshgrid(kx_range, ky_range)
 
     def compute_bands(self):
         """Compute the energy bands based on the current parameters."""
-        # note b does nothing
-        alpha = np.sqrt(
-            1 + 4 * np.cos(np.sqrt(3) * self.b * self.a / 2 * self.kx) * np.cos(self.b * self.a / 2 * self.ky) + 4 * np.cos(self.b * self.a / 2 * self.ky) ** 2
-        )
-        E_plus = self.gamma * alpha
-        E_minus = -self.gamma * alpha
+        # Hamiltonian terms
+        epsilon = np.array([[self.epsilon_z, self.gamma_s], [self.gamma_s, self.epsilon_a]])
+        t = [
+            self.t_0 * np.exp(-self.beta * np.linalg.norm((np.dot((np.eye(2) + epsilon), delta))) / self.a)
+            for delta in self.delta
+        ]
+        
+        gamma = sum(ti ** 2 for ti in t)
+        g = np.zeros_like(self.kx)
+
+        # Compute the g term, including the epsilon contribution
+        for n in range(len(self.delta)):
+            for s in range(n + 1, len(self.delta)):
+                delta_diff = self.delta[n] - self.delta[s]
+                # Include epsilon in the phase term
+                phase = np.dot(
+                    np.dot(np.stack((self.kx, self.ky), axis=0).T, np.eye(2) + epsilon), 
+                    delta_diff
+                )
+                g += 2 * t[n] * t[s] * np.cos(phase)
+
+
+        # Energy bands
+        E_plus = np.sqrt(gamma + g)
+        E_minus = -np.sqrt(gamma + g)
+
         return E_plus, E_minus
+    
 
     def plot_bands(self):
         """Plot the conduction and valence bands."""
@@ -117,21 +145,28 @@ class graph3D:
             # Schedule the next update
             self.master.after(1000, self.update)  # Update every 100 ms
 
+
 class graph2D:
     def __init__(self, master):
         self.master = master
 
         # Constants
-        self.b = 1 # random variable
-        self.a = 0.246  # nm, lattice constant
-        self.gamma = 2.7  # eV
+        self.beta = 2.7                                         # some number 2-3
+        self.a = 0.246                                          # nm, lattice constant
+        self.delta = [self.a/2 * np.array([np.sqrt(3), 1]),     # hopping integral to nearest neighbors
+                self.a/2 * np.array([-np.sqrt(3), 1]),          # hopping integral to nearest neighbors
+                self.a * np.array([0, -1])]                     # hopping integral to nearest neighbors
+        self.t_0 = 1                                            # assume for simplicity
+        self.gamma_s = 0
+        self.epsilon_a = 0
+        self.epsilon_z = 0
 
         # Tkinter frame for Matplotlib
         self.frame = Frame(master)
         self.frame.pack(fill="both", expand=True)
 
         # Matplotlib figure with transparent background
-        self.fig_2d = Figure(figsize=(4, 4), dpi=100, facecolor="#2e2e2e")
+        self.fig_2d = Figure(figsize=(3, 3), dpi=100, facecolor="#2e2e2e")
         self.ax_2d = self.fig_2d.add_subplot(111, facecolor="#2e2e2e")
 
         # Attach the canvas to Tkinter
@@ -148,21 +183,44 @@ class graph2D:
         # get the latest new hits!
         self.update()
 
+
     def init_k_space(self):
         """Initialize the k-space grid and energy bands."""
-        kx_range = np.linspace(-2 * np.pi / self.a, 2 * np.pi / self.a, 300)
-        ky_range = np.linspace(-2 * np.pi / self.a, 2 * np.pi / self.a, 300)
+        kx_range = np.linspace(-15, 15, 100)
+        ky_range = np.linspace(-15, 15, 100)
         self.kx, self.ky = np.meshgrid(kx_range, ky_range)
+
 
     def compute_bands(self):
         """Compute the energy bands based on the current parameters."""
-        # note b does nothing
-        alpha = np.sqrt(
-            1 + 4 * np.cos(np.sqrt(3) * self.b * self.a / 2 * self.kx) * np.cos(self.b * self.a / 2 * self.ky) + 4 * np.cos(self.b * self.a / 2 * self.ky) ** 2
-        )
-        E_plus = self.gamma * alpha
-        E_minus = -self.gamma * alpha
+        # Hamiltonian terms
+        epsilon = np.array([[self.epsilon_z, self.gamma_s], [self.gamma_s, self.epsilon_a]])
+        t = [
+            self.t_0 * np.exp(-self.beta * np.linalg.norm((np.dot((np.eye(2) + epsilon), delta))) / self.a)
+            for delta in self.delta
+        ]
+        
+        gamma = sum(ti ** 2 for ti in t)
+        g = np.zeros_like(self.kx)
+
+        # Compute the g term, including the epsilon contribution
+        for n in range(len(self.delta)):
+            for s in range(n + 1, len(self.delta)):
+                delta_diff = self.delta[n] - self.delta[s]
+                # Include epsilon in the phase term
+                phase = np.dot(
+                    np.dot(np.stack((self.ky, self.kx), axis=0).T, np.eye(2) + epsilon), 
+                    delta_diff
+                )
+                g += 2 * t[n] * t[s] * np.cos(phase)
+
+
+        # Energy bands
+        E_plus = np.sqrt(gamma + g)
+        E_minus = -np.sqrt(gamma + g)
+
         return E_plus, E_minus
+
 
     def plot_bands(self):
         """Plot the conduction and valence bands."""
@@ -171,13 +229,11 @@ class graph2D:
         # Compute energy bands
         E_plus, _ = self.compute_bands()
 
-        # Plot contours for the conduction band
-        contour_plus = self.ax_2d.contourf(self.kx, self.ky, E_plus, levels=100, cmap='viridis')
-        
-        # Add a continuous colorbar
-        # cbar = self.fig_2d.colorbar(contour_plus, ax=self.ax_2d)
-        # cbar.set_label("Conduction Band Energy (eV)", color='white')  # Set color of the label to white
-        # cbar.ax.tick_params(labelcolor='white')  # Set color of colorbar ticks to white
+        # Plot filled contours for the conduction band
+        contour_plus_filled = self.ax_2d.contourf(self.kx, self.ky, E_plus, levels=20, cmap='viridis')
+
+        # Plot line contours for the conduction band
+        contour_plus_lines = self.ax_2d.contour(self.kx, self.ky, E_plus, levels=20, colors='grey', linewidths=0.5)
 
         # Axes labels
         self.ax_2d.set_xlabel('$k_x$ ($\mathrm{nm}^{-1}$)', color='white')
@@ -188,6 +244,137 @@ class graph2D:
         self.ax_2d.tick_params(colors='white')
         self.ax_2d.xaxis.label.set_color('white')
         self.ax_2d.yaxis.label.set_color('white')
+
+
+    def update(self):
+        self.compute_bands()
+        self.plot_bands()
+        self.canvas.draw()
+
+        # Schedule the next update
+        self.master.after(1000, self.update)  # Update every 1000 ms
+
+
+class graph1D:
+    def __init__(self, master):
+        self.master = master
+
+        # Constants
+        self.beta = 2.7  # Some number between 2-3
+        self.a = 0.246  # nm, lattice constant
+        self.delta = [self.a/2 * np.array([np.sqrt(3), 1]),  # Hopping integral to nearest neighbors
+                      self.a/2 * np.array([-np.sqrt(3), 1]),  # Hopping integral to nearest neighbors
+                      self.a * np.array([0, -1])]  # Hopping integral to next-nearest neighbors
+        self.t_0 = 35  # Assume for simplicity
+        self.gamma_s = 0
+        self.epsilon_a = 0
+        self.epsilon_z = 0
+
+        # Tkinter frame for Matplotlib
+        self.frame = Frame(master)
+        self.frame.pack(fill="both", expand=True)
+
+        # Matplotlib figure with transparent background
+        self.fig_2d = Figure(figsize=(3, 6), dpi=100, facecolor="#2e2e2e")
+        self.ax_2d = self.fig_2d.add_subplot(111, facecolor="#2e2e2e")
+
+        # Attach the canvas to Tkinter
+        self.canvas = FigureCanvasTkAgg(self.fig_2d, master=self.frame)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(fill="both", expand=True)
+
+        # Initialize k-space path
+        self.init_k_path()
+
+        # Plot the initial bands
+        self.plot_bands()
+
+        # Get the latest new hits!
+        self.update()
+
+    def init_k_path(self):
+        """Initialize the k-space path for M to Gamma to K to M."""
+        # Define the high-symmetry points in the Brillouin zone (in units of 1/a)
+        M1 = np.array([0, 8])
+        Gamma = np.array([0, 0])
+        K = np.array([10, 0])
+        M2 = np.array([0, 8])
+
+        # Define the path: M -> Gamma -> K -> M
+        self.k_path = [M1, Gamma, K, M2]
+        self.k_points = np.linspace(M1, Gamma, 1000).tolist() + np.linspace(Gamma, K, 1000).tolist() + np.linspace(K, M2, 1000).tolist()
+
+        # Convert the k-points to numpy array for computations
+        self.k_points = np.array(self.k_points)
+
+
+    def compute_bands(self):
+        """Compute the energy bands based on the current parameters."""
+        # Hamiltonian terms
+        epsilon = np.array([[self.epsilon_z, self.gamma_s], [self.gamma_s, self.epsilon_a]])
+        t = [
+            self.t_0 * np.exp(-self.beta * np.linalg.norm((np.eye(2) + epsilon).dot(delta)) / self.a)
+            for delta in self.delta
+        ]
+
+        gamma = sum(ti ** 2 for ti in t)
+        g = np.zeros(len(self.k_points))
+
+        # Compute the g term, including the epsilon contribution
+        for n in range(len(self.delta)):
+            for s in range(n + 1, len(self.delta)):
+                delta_diff = self.delta[n] - self.delta[s]
+                # Include epsilon in the phase term
+                phase = np.dot(
+                    np.dot(self.k_points, np.eye(2) + epsilon),
+                    delta_diff
+                )
+                g += 2 * t[n] * t[s] * np.cos(phase)
+
+        # Energy bands
+        E_plus = np.sqrt(gamma + g)
+        E_minus = -np.sqrt(gamma + g)
+
+        return E_plus, E_minus
+
+
+    def plot_bands(self):
+        """Plot the conduction and valence bands."""
+        self.ax_2d.clear()
+
+        # Compute energy bands
+        E_plus, _ = self.compute_bands()
+
+        # Plot band structure along the k-path
+        self.ax_2d.plot(range(len(self.k_points)), E_plus, label='Conduction Band', color='aqua')
+        self.ax_2d.plot(range(len(self.k_points)), -E_plus, label='Valence Band', color='red')
+
+        # Mark high-symmetry points (M, Γ, K)
+        k_labels = ['M', 'Γ', 'K', 'M']
+        k_indices = [0, 999, 1999, 2999]  # Adjust these indices if needed
+        for i, label in zip(k_indices, k_labels):
+            self.ax_2d.annotate(label, (i, E_plus[i]), textcoords="offset points", xytext=(0, 10), ha='center', color='white')
+
+        # Set custom x-ticks at the indices of the high-symmetry points
+        self.ax_2d.set_xticks(k_indices)
+        self.ax_2d.set_xticklabels(k_labels, color='white')
+
+        # Set white outlines for the axes
+        for spine in self.ax_2d.spines.values():
+            spine.set_color('white')
+            spine.set_linewidth(1)
+
+        # Customize tick parameters for white color
+        self.ax_2d.tick_params(colors='white')
+
+        # Customize grid lines to be white
+        self.ax_2d.grid(color='white', linestyle='--')
+
+        # Axes labels and title
+        self.ax_2d.set_xlabel('k-point', color='white')
+        self.ax_2d.set_ylabel('Energy (eV)', color='white')
+        self.ax_2d.set_title('Band Structure: M -> Γ -> K -> M', color='white')
+
 
     def update(self):
         self.compute_bands()

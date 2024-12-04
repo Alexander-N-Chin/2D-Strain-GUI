@@ -3,7 +3,7 @@ from tkinter import *
 from math import sqrt, pi
 
 class Graphene:
-    def __init__(self, origin=(100, 250), a_length= 50, length=6, width=6):
+    def __init__(self, origin=(-300, 250), a_length= 100, length=6, width=6):
         self.origin = origin
         self.a_length = a_length
         self.width = width
@@ -41,7 +41,7 @@ class Graphene:
                 self.B_coordinates[i][j] = (x, y)
     
 
-    def calc_reciprocal_lattice(self, scale_factor = 300):
+    def calc_reciprocal_lattice(self, scale_factor = 1500):
         self.basis_b1 = (2* pi / sqrt(3) / self.a_length, 2 * pi / self.a_length)
         self.basis_b2 = (2* pi / sqrt(3) / self.a_length, -2 * pi / self.a_length)
 
