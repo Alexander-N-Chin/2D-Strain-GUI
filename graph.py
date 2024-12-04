@@ -53,8 +53,8 @@ class graph3D:
 
     def init_k_space(self):
         """Initialize the k-space grid and energy bands."""
-        kx_range = np.linspace(-15, 15, 500)
-        ky_range = np.linspace(-15, 15, 500)
+        kx_range = np.linspace(-15, 15, 200)
+        ky_range = np.linspace(-15, 15, 200)
         self.kx, self.ky = np.meshgrid(kx_range, ky_range)
 
     def compute_bands(self):
@@ -252,7 +252,7 @@ class graph2D:
         self.canvas.draw()
 
         # Schedule the next update
-        self.master.after(100, self.update)  # Update every 1000 ms
+        self.master.after(1000, self.update)  # Update every 1000 ms
 
 
 class graph1D:
@@ -291,6 +291,7 @@ class graph1D:
 
         # Get the latest new hits!
         self.update()
+
 
     def init_k_path(self):
         """Initialize the k-space path for M to Gamma to K to M."""
@@ -382,4 +383,4 @@ class graph1D:
         self.canvas.draw()
 
         # Schedule the next update
-        self.master.after(100, self.update)  # Update every 1000 ms
+        self.master.after(1000, self.update)  # Update every 1000 ms
