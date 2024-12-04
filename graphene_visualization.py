@@ -37,24 +37,19 @@ def redraw_canvas_recip(g: Graphene, canvas: tk.Canvas):
     g.draw_reciprocal_atoms(canvas)
 
 
-def update_canvas(g: Graphene, r1: graph3D, r2: graph2D, r3: graph1D, scale_dict: dict[str, tk.Scale], lattice_canvas, recip_canvas):
+def update_canvas(g: Graphene, r1: graph3D, r2: graph2D, r3: graph1D, scale_dict: dict[str, tk.Scale], lattice_canvas):
     # Read the current values from the scales
-    width = scale_dict["width"].get()
-    length = scale_dict["length"].get()
     shear = scale_dict["shear strain"].get()
     zigzag = scale_dict["zigzag strain"].get()
     armchair = scale_dict["armchair strain"].get()
 
     # Update the Graphene object
-    g.width = int(width)
-    g.length = int(length)
-    r1.gamma_s = r2.gamma_s = r3.gamma_s = shear
-    r1.epsilon_z = r2.epsilon_z = r3.epsilon_z = zigzag
-    r1.epsilon_a = r2.epsilon_a = r3.epsilon_a = armchair
+    r1.gamma_s = r2.gamma_s = r3.gamma_s = g.gamma_s = shear
+    r1.epsilon_z = r2.epsilon_z = r3.epsilon_z = g.epsilon_z = zigzag
+    r1.epsilon_a = r2.epsilon_a = r3.epsilon_a = g.epsilon_a = armchair
     
     # Redraw the canvas
     redraw_canvas_lattice(g, lattice_canvas)
-    redraw_canvas_recip(g, recip_canvas)
 
 
 def do_zoom(event, canvas):
@@ -87,8 +82,6 @@ def main():
 
     # Define the list of input fields with parameters
     input_fields = [
-        ("width", 1.0, 10.0, 7),
-        ("length", 1.0, 10.0, 7),
         ("shear strain", -.2, .2, 0.0),
         ("zigzag strain", -.30, .30, 0.0),
         ("armchair strain", -.25, .25, 0.0)
@@ -108,7 +101,7 @@ def main():
             orient="horizontal",  # Slider orientation
             resolution=0.01,  # Set step size for floating-point increments
             command=lambda value, key=label_text: update_canvas(
-                g, r1, r2, r3, scale_dict, lattice_canvas, recip_canvas
+                g, r1, r2, r3, scale_dict, lattice_canvas
             )  # Pass current slider values to the callback
         )
         scale.set(default_val)  # Set the default value of the slider
@@ -141,15 +134,15 @@ def main():
     lattice_canvas.bind("<B1-Motion>", lambda event: lattice_canvas.scan_dragto(event.x, event.y, gain=1))
     lattice_canvas.pack(fill="both", expand=True)
 
-    # Add a canvas to the reciprocal column
-    recip_canvas = tk.Canvas(canvas_frame, background="#1e1e1e", width=300)
-    recip_canvas.bind("<MouseWheel>", lambda event: do_zoom(event, recip_canvas)) # WINDOWS ONLY
-    recip_canvas.bind('<ButtonPress-1>', lambda event: recip_canvas.scan_mark(event.x, event.y))
-    recip_canvas.bind("<B1-Motion>", lambda event: recip_canvas.scan_dragto(event.x, event.y, gain=1))
-    recip_canvas.pack(fill="both", expand=True)
+    # # Add a canvas to the reciprocal column
+    # recip_canvas = tk.Canvas(canvas_frame, background="#1e1e1e", width=300)
+    # recip_canvas.bind("<MouseWheel>", lambda event: do_zoom(event, recip_canvas)) # WINDOWS ONLY
+    # recip_canvas.bind('<ButtonPress-1>', lambda event: recip_canvas.scan_mark(event.x, event.y))
+    # recip_canvas.bind("<B1-Motion>", lambda event: recip_canvas.scan_dragto(event.x, event.y, gain=1))
+    # recip_canvas.pack(fill="both", expand=True)
 
     # Initial canvas drawing
-    redraw_canvas_recip(g, recip_canvas)
+    # redraw_canvas_recip(g, recip_canvas)
     redraw_canvas_lattice(g, lattice_canvas)
 
     root.mainloop()

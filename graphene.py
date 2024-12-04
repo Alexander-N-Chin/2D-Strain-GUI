@@ -1,20 +1,25 @@
 import tkinter as tk
 from tkinter import *
 from math import sqrt, pi
+import numpy as np
 
 class Graphene:
-    def __init__(self, origin=(-300, 250), a_length= 100, length=6, width=6):
+    def __init__(self, origin=(-600, 300), a_length= 70, length=15, width=15):
         self.origin = origin
         self.a_length = a_length
         self.width = width
         self.length = length
+        self.epsilon_a = 0
+        self.epsilon_z = 0
+        self.gamma_s = 0
         self.calculate_coords()
         self.calc_reciprocal_lattice()
         
 
     def calculate_coords(self):
-        self.basis_a1 = (sqrt(3)*self.a_length/2, self.a_length/2)
-        self.basis_a2 = (sqrt(3)*self.a_length/2, -self.a_length/2)
+        epsilon = np.array([[self.epsilon_z, self.gamma_s], [self.gamma_s, self.epsilon_a]])
+        self.basis_a1 = np.dot( (np.eye(2) + epsilon ), np.array([sqrt(3)*self.a_length/2, self.a_length/2]))
+        self.basis_a2 = np.dot( (np.eye(2) + epsilon ), np.array([sqrt(3)*self.a_length/2, -self.a_length/2]))
         self.basis_d = (self.a_length/sqrt(3), 0)
         
         self.A_coordinates = self.A_coordinates = [[0 for _ in range(self.length)] for _ in range(self.width)]
@@ -41,25 +46,23 @@ class Graphene:
                 self.B_coordinates[i][j] = (x, y)
     
 
-    def calc_reciprocal_lattice(self, scale_factor = 1500):
-        self.basis_b1 = (2* pi / sqrt(3) / self.a_length, 2 * pi / self.a_length)
-        self.basis_b2 = (2* pi / sqrt(3) / self.a_length, -2 * pi / self.a_length)
+    def calc_reciprocal_lattice(self, scale_factor = 800):
+        # Define the 90-degree rotation matrix
+        rotation_matrix = np.array([[0, -1], [1, 0]])
 
-        self.basis_M1 = (2 * pi / sqrt(3) / self.a_length, 0)
-        self.basis_M2 = (-2 * pi / sqrt(3) / self.a_length, 0)
+        self.basis_b1 = 2 * pi * np.dot(rotation_matrix, self.basis_a2) / np.linalg.det(np.vstack((self.basis_a1, self.basis_a2)))
+        self.basis_b2 = 2 * pi * np.dot(rotation_matrix, -self.basis_a1) / np.linalg.det(np.vstack((self.basis_a1, self.basis_a2)))
 
-        self.basis_K = [(2 * pi / sqrt(3) / self.a_length, 2 * pi / 3 / self.a_length),
-            (2 * pi / sqrt(3) / self.a_length, -2 * pi / 3 / self.a_length),
-            (0, -4 * pi / 3 / self.a_length),
-            (-2 * pi / sqrt(3) / self.a_length, -2 * pi / 3 / self.a_length),
-            (-2 * pi / sqrt(3) / self.a_length, 2 * pi / 3 / self.a_length),
-            (0, 4 * pi / 3 / self.a_length)]
+        self.basis_K = [(4 * pi / 3 / np.sqrt(3) / self.a_length * np.array([ 1 - self.epsilon_z/2 - self.epsilon_a/2, -2 * self.gamma_s])), 
+                        (4 * pi / 3 / np.sqrt(3) / self.a_length * np.array([ 1 - self.epsilon_z/2 - self.epsilon_a/2, -2 * self.gamma_s])), 
+                        (-4 * pi / 3 / np.sqrt(3) / self.a_length * np.array([ 1 - self.epsilon_z/2 - self.epsilon_a/2, -2 * self.gamma_s])), 
+                        (-4 * pi / 3 / np.sqrt(3) / self.a_length * np.array([ 1 - self.epsilon_z/2 - self.epsilon_a/2, -2 * self.gamma_s]))]
 
         # reciprocal lattice
         self.reciprocal_lattice_coordinates = [[0 for _ in range(self.length)] for _ in range(self.width)]
         self.k_coordinates = [[[] for _ in range(self.length)] for _ in range(self.width)]
         self.m_coordinates = [[[] for _ in range(self.length)] for _ in range(self.width)]
-        self.reciprocal_lattice_coordinates[0][0] = self.origin
+        self.reciprocal_lattice_coordinates[0][0] = (self.origin[0]+400, self.origin[1])
         for i in range(self.width):
             if i != 0:
                 x, y = self.reciprocal_lattice_coordinates[i-1][0]
@@ -111,7 +114,7 @@ class Graphene:
                     canvas.create_line(a_x1, a_y1, a_x2, a_y2, fill="#555555")
         
 
-    def draw_reciprocal_atoms(self, canvas:tk.Canvas, radius = 5, radius2 = 3):
+    def draw_reciprocal_atoms(self, canvas:tk.Canvas, radius = 5, radius2 = 5):
         for i in range(self.width):
             for j in range(self.length):
                 x, y = self.reciprocal_lattice_coordinates[i][j]
@@ -134,7 +137,7 @@ class Graphene:
                     a_x, a_y = self.reciprocal_lattice_coordinates[i][j+1]
                     canvas.create_line(a_x, a_y, b_x, b_y, fill="#555555")
 
-                for k in range(6):
+                for k in range(2):
                     if k == 0:
                         x1, y1 = self.k_coordinates[i][j][-1]
                     else:

@@ -252,7 +252,7 @@ class graph2D:
         self.canvas.draw()
 
         # Schedule the next update
-        self.master.after(1000, self.update)  # Update every 1000 ms
+        self.master.after(100, self.update)  # Update every 1000 ms
 
 
 class graph1D:
@@ -382,4 +382,4 @@ class graph1D:
         self.canvas.draw()
 
         # Schedule the next update
-        self.master.after(1000, self.update)  # Update every 1000 ms
+        self.master.after(100, self.update)  # Update every 1000 ms
