@@ -1,5 +1,7 @@
 # 🌐 Graphene Multiaxial Strain Simulation
 
+![alt text](https://github.com/Alexander-N-Chin/Graphene-Multiaxial-Strain-Simulation/blob/main/GUI.png?raw=true)
+
 ## 📄 Overview
 This project simulates multiaxial strain on graphene and provides interactive visualizations of its electronic structure and lattice geometry. The tool enables users to explore how strain affects the direct lattice, reciprocal lattice, ⚡ energy dispersion, and bandgap properties of graphene.
 
